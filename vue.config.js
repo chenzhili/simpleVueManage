@@ -24,6 +24,13 @@ module.exports = {
    * In most cases please use '/' !!!
    * Detail: https://cli.vuejs.org/config/#publicpath
    */
+  css: {
+    loaderOptions: {
+      sass: {
+        data: '@import "@/styles/variables.scss";'
+      }
+    }
+  },
   publicPath: '/',
   outputDir: 'dist',
   assetsDir: 'static',
@@ -32,6 +39,17 @@ module.exports = {
   devServer: {
     port: port,
     // open: true,
+    proxy: {
+      // 招采 模块
+      '/bpm': {
+        target: 'http://192.168.16.46:8060',
+        // 这里是为了 重定向 路径为 /
+        changeOrigin: true/* ,
+        pathRewrite: {
+          '^/bpm': '/'
+        } */
+      }
+    },
     overlay: {
       warnings: false,
       errors: true
