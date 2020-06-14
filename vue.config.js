@@ -8,6 +8,13 @@ function resolve (dir) {
 
 const name = defaultSettings.title || 'vue Admin Template' // page title
 
+/* 添加 gzip 压缩 */
+const CompressionWebpackPlugin = require('compression-webpack-plugin');
+// 可加入需要的其他文件类型，比如json
+// 图片不要压缩，体积会比原来还大
+// 结论：svg、eot 和 ttf 这三种格式的字体文件可以使用CompressionWebpackPlugin进行压缩，并且配合Nginx的gzip_types配置，woff和woff2格式的字体文件不需要gzip。
+const productionGzipExtensions = ['js', 'css', 'svg', 'eot', 'ttf'];
+
 // If your port is set to 80,
 // use administrator privileges to execute the command line.
 // For example, Mac: sudo npm run
@@ -60,11 +67,24 @@ module.exports = {
     // provide the app's title in webpack's name field, so that
     // it can be accessed in index.html to inject the correct title.
     name: name,
+    // output: { // 输出重构  打包编译后的 文件名称  【模块名称.chunk.js】
+    //   filename: 'static/[name].[chunkhash].js',
+    //   chunkFilename: 'static/[name].[chunkhash].js'
+    // },
     resolve: {
       alias: {
         '@': resolve('src')
       }
-    }
+    },
+    plugins: [
+      new CompressionWebpackPlugin({
+        // filename: '[path].gz[query]',
+        algorithm: 'gzip',
+        test: new RegExp('\\.(' + productionGzipExtensions.join('|') + ')$'),
+        threshold: 10240, // 对超过10k的数据进行压缩
+        minRatio: 0.6 // 压缩比例，值为0 ~ 1
+      })
+    ]
   },
   chainWebpack (config) {
     config.plugins.delete('preload') // TODO: need test
@@ -99,7 +119,7 @@ module.exports = {
       .end()
 
     config
-    // https://webpack.js.org/configuration/devtool/#development
+      // https://webpack.js.org/configuration/devtool/#development
       .when(process.env.NODE_ENV === 'development',
         config => config.devtool('cheap-source-map')
       )
@@ -111,7 +131,7 @@ module.exports = {
             .plugin('ScriptExtHtmlWebpackPlugin')
             .after('html')
             .use('script-ext-html-webpack-plugin', [{
-            // `runtime` must same as runtimeChunk name. default is `runtime`
+              // `runtime` must same as runtimeChunk name. default is `runtime`
               inline: /runtime\..*\.js$/
             }])
             .end()
